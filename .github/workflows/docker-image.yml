@@ -34,4 +34,5 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ github.repository }}/ai-word-notebook:latest,ghcr.io/${{ github.repository }}/ai-word-notebook:${{ github.sha }}
+          # Force lowercase image name to comply with Docker standards
+          tags: ghcr.io/handsomezhuzhu/wwords:latest,ghcr.io/handsomezhuzhu/wwords:${{ github.sha }}

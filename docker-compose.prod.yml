@@ -3,10 +3,11 @@ version: '3.8'
 services:
   app:
     # Use the pre-built image from GitHub Container Registry
-    image: ghcr.io/handsomezhuzhu/english-words-2/ai-word-notebook:latest
-    container_name: ai-word-notebook
+    # Image name must be lowercase
+    image: ghcr.io/handsomezhuzhu/wwords:latest
+    container_name: wwords
     ports:
-      - "8000:8000"
+      - "7997:7997"
     volumes:
       - ./data:/app/data
     environment:

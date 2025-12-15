@@ -1,10 +1,9 @@
-# AI 单词本 (AI Word Notebook)
+# WWords AI 单词本
 
 借助 AI 补全和艾宾浩斯记忆的双语单词管理工具。
 基于 FastAPI + SQLite + Vanilla JS 构建，支持 Docker 一键部署。
 
 ![Dashboard Preview](docs/cover.png)
-
 
 ## ✨ 功能特性
 
@@ -22,10 +21,10 @@
 
 ### 方法一：使用 Docker Compose (推荐)
 
-1.  **下载代码或仅下载 `docker-compose.yml`**
+1.  **下载代码或仅下载 `docker-compose.prod.yml`**
     ```bash
-    git clone https://github.com/handsomezhuzhu/english-words-2.git
-    cd english-words-2
+    git clone https://github.com/handsomezhuzhu/WWords.git
+    cd WWords
     ```
 
 2.  **配置环境变量**
@@ -47,11 +46,12 @@
     ```
 
 3.  **启动服务**
+    使用生产环境配置文件启动：
     ```bash
     # 拉取最新镜像并后台启动
-    docker-compose up -d
+    docker-compose -f docker-compose.prod.yml up -d
     ```
-    服务启动后，访问 `http://localhost:8000` 即可使用。
+    服务启动后，访问 `http://localhost:7997` 即可使用。
     数据会持久化保存在当前目录的 `data/` 文件夹下。
 
 ### 方法二：直接使用 Docker Run
@@ -59,8 +59,9 @@
 如果您不想使用 docker-compose，也可以直接运行命令：
 
 1.  **拉取镜像**
+    *注意：镜像名必须全为小写*
     ```bash
-    docker pull ghcr.io/handsomezhuzhu/english-words-2/ai-word-notebook:latest
+    docker pull ghcr.io/handsomezhuzhu/wwords:latest
     ```
 
 2.  **创建数据目录**
@@ -72,15 +73,15 @@
     请替换 `-e` 参数中的值为您自己的配置：
     ```bash
     docker run -d \
-      --name ai-word-notebook \
-      -p 8000:8000 \
+      --name wwords \
+      -p 7997:7997 \
       -v $(pwd)/data:/app/data \
       -e ADMIN_EMAIL="admin@example.com" \
       -e ADMIN_PASSWORD="your_password" \
       -e SECRET_KEY="your_secret_key" \
       -e DATABASE_URL="sqlite:///./data/data.db" \
       --restart unless-stopped \
-      ghcr.io/handsomezhuzhu/english-words-2/ai-word-notebook:latest
+      ghcr.io/handsomezhuzhu/wwords:latest
     ```
 
 ---
@@ -95,7 +96,7 @@
     *   **Provider**: 选择 OpenAI 或 Gemini（通用协议）。
     *   **API URL**: AI 服务的接口地址（例如 `https://api.openai.com/v1` 或您的中转代理地址）。
     *   **API Key**: 您的 API 密钥。
-    *   **Model**: 使用的模型名称（如 `gpt-4o-mini` 等）。
+    *   **Model**: 使用的模型名称（如 `gpt-4o-mini`, `gpt-3.5-turbo` 等）。
 4.  保存配置。
 
 ---
@@ -129,8 +130,8 @@
 
 ## 🔗 相关链接
 
-*   项目地址: [https://github.com/handsomezhuzhu/english-words-2](https://github.com/handsomezhuzhu/english-words-2)
-*   Docker 镜像: `ghcr.io/handsomezhuzhu/english-words-2/ai-word-notebook`
+*   项目地址: [https://github.com/handsomezhuzhu/WWords](https://github.com/handsomezhuzhu/WWords)
+*   Docker 镜像: `ghcr.io/handsomezhuzhu/wwords`
 
 ## 📄 License
 
