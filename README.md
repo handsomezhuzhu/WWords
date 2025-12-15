@@ -3,8 +3,8 @@
 借助 AI 补全和艾宾浩斯记忆的双语单词管理工具。
 基于 FastAPI + SQLite + Vanilla JS 构建，支持 Docker 一键部署。
 
-![Dashboard Preview](docs/dashboard-preview.png)
-*(如果有截图可以放这里，没有可以忽略)*
+![Dashboard Preview](docs/cover.jpg)
+
 
 ## ✨ 功能特性
 
@@ -95,7 +95,7 @@
     *   **Provider**: 选择 OpenAI 或 Gemini（通用协议）。
     *   **API URL**: AI 服务的接口地址（例如 `https://api.openai.com/v1` 或您的中转代理地址）。
     *   **API Key**: 您的 API 密钥。
-    *   **Model**: 使用的模型名称（如 `gpt-4o-mini`, `gpt-3.5-turbo` 等）。
+    *   **Model**: 使用的模型名称（如 `gpt-4o-mini` 等）。
 4.  保存配置。
 
 ---
