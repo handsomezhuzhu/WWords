@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Word Notebook</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<div class="hero">
+    <div>
+        <h1 data-i18n="title">AI Word Notebook</h1>
+        <p data-i18n="subtitle">Manage bilingual vocabulary with AI-assisted completion and Ebbinghaus review.</p>
+        <div class="actions">
+            <a class="btn" href="#login" data-i18n="login">Login</a>
+            <a class="btn ghost" href="#register" data-i18n="register">Register</a>
+        </div>
+        <div class="toggles">
+            <button id="theme-toggle" class="chip" data-i18n="toggleTheme">Toggle Theme</button>
+            <button id="lang-toggle" class="chip" data-i18n="toggleLang">中 / EN</button>
+        </div>
+    </div>
+</div>
+
+<div class="panel" id="login">
+    <h2 data-i18n="login">Login</h2>
+    <form method="post" action="/auth/token">
+        <label>Email <input name="username" type="email" required></label>
+        <label>Password <input name="password" type="password" required></label>
+        <button class="btn" type="submit" data-i18n="login">Login</button>
+    </form>
+</div>
+
+<div class="panel" id="register">
+    <h2 data-i18n="register">Register</h2>
+    <form method="post" action="/auth/register">
+        <label>Email <input name="email" type="email" required></label>
+        <label>Password <input name="password" type="password" required></label>
+        <label data-i18n="language">Language
+            <select name="preferred_language">
+                <option value="en">English</option>
+                <option value="zh">中文</option>
+            </select>
+        </label>
+        <label data-i18n="theme">Theme
+            <select name="preferred_theme">
+                <option value="light" data-i18n="light">Light</option>
+                <option value="dark" data-i18n="dark">Dark</option>
+            </select>
+        </label>
+        <button class="btn" type="submit" data-i18n="register">Register</button>
+    </form>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

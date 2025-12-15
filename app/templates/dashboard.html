@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="dashboard">Dashboard</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header class="topbar">
+    <h1 data-i18n="dashboard">Dashboard</h1>
+    <div class="toggles">
+        <button id="theme-toggle" class="chip" data-i18n="toggleTheme">Toggle Theme</button>
+        <button id="lang-toggle" class="chip" data-i18n="toggleLang">中 / EN</button>
+    </div>
+</header>
+
+<section class="panel">
+    <h2 data-i18n="addWord">Add Word</h2>
+    <form id="add-word-form">
+        <div class="grid">
+            <label data-i18n="english">English
+                <input name="english" placeholder="hello">
+            </label>
+            <label data-i18n="chinese">Chinese
+                <input name="chinese" placeholder="你好">
+            </label>
+            <label data-i18n="pos">Part of speech
+                <input name="part_of_speech" placeholder="noun">
+            </label>
+        </div>
+        <label data-i18n="definition">Definition
+            <textarea name="definition" placeholder="greeting used when meeting"></textarea>
+        </label>
+        <label data-i18n="examples">Examples
+            <textarea name="examples" placeholder="Hello, world!"></textarea>
+        </label>
+        <div class="actions">
+            <button class="btn" type="button" id="ai-complete" data-i18n="complete">AI Complete</button>
+            <button class="btn ghost" type="submit" data-i18n="save">Save</button>
+        </div>
+        <pre id="completion-output"></pre>
+    </form>
+</section>
+
+<section class="panel">
+    <h2 data-i18n="myWords">My Words</h2>
+    <table>
+        <thead>
+        <tr>
+            <th data-i18n="english">English</th>
+            <th data-i18n="chinese">Chinese</th>
+            <th data-i18n="pos">POS</th>
+            <th data-i18n="definition">Definition</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for word in words %}
+            <tr>
+                <td>{{ word.english }}</td>
+                <td>{{ word.chinese }}</td>
+                <td>{{ word.part_of_speech }}</td>
+                <td>{{ word.definition }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</section>
+
+<section class="panel">
+    <h2 data-i18n="review">Review</h2>
+    <form id="start-review">
+        <label data-i18n="mode">Mode
+            <select name="mode">
+                <option value="en_to_zh">EN → ZH</option>
+                <option value="zh_to_en">ZH → EN</option>
+            </select>
+        </label>
+        <label data-i18n="count">Count
+            <input name="count" type="number" value="5" min="1" max="30">
+        </label>
+        <button class="btn" type="submit" data-i18n="start">Start</button>
+    </form>
+    <div id="review-area"></div>
+</section>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
