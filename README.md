@@ -3,7 +3,7 @@
 借助 AI 补全和艾宾浩斯记忆的双语单词管理工具。
 基于 FastAPI + SQLite + Vanilla JS 构建，支持 Docker 一键部署。
 
-![Dashboard Preview](docs/cover.jpg)
+![Dashboard Preview](docs/cover.png)
 
 
 ## ✨ 功能特性
