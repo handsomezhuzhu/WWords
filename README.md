@@ -40,10 +40,17 @@
     
     # 系统密钥（用于加密 Token，生产环境务必修改）
     SECRET_KEY=generate_a_long_random_string_here
-    
+
     # 数据库路径（通常不需要改）
     DATABASE_URL=sqlite:///./data/data.db
     ```
+
+    **部署时务必满足以下安全要求：**
+
+    *   `SECRET_KEY` 必须是长度足够的随机字符串，**不要使用默认值**，也不要在不同环境之间重复使用同一个密钥。
+    *   `ADMIN_EMAIL` 和 `ADMIN_PASSWORD` 必须显式设置，否则不会创建默认管理员账号；管理员密码建议至少 12 位，并包含大小写字母、数字和符号。
+    *   浏览器 Token Cookie 默认启用 `secure`，生产环境应保持 `SECURE_COOKIES=true`（默认值）并根据需要设置 `COOKIE_SAMESITE`（建议 `lax`）。
+    *   应用启动后注册/修改密码会强制执行复杂度校验（长度≥12、包含大小写、数字、符号），部署时请告知用户这一要求。
 
 3.  **启动服务**
     使用生产环境配置文件启动：

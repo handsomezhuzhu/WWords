@@ -24,9 +24,16 @@ templates = Jinja2Templates(directory="app/templates")
 @app.on_event("startup")
 def create_admin_user():
     db = next(get_db())
-    admin_email = os.getenv("ADMIN_EMAIL", "admin@example.com")
-    admin_password = os.getenv("ADMIN_PASSWORD", "admin")
-    
+    admin_email = os.getenv("ADMIN_EMAIL")
+    admin_password = os.getenv("ADMIN_PASSWORD")
+
+    if not admin_email or not admin_password:
+        print(
+            "ADMIN_EMAIL and ADMIN_PASSWORD must be set to bootstrap an admin user; "
+            "skipping automatic creation"
+        )
+        return
+
     existing_admin = db.query(models.User).filter(models.User.email == admin_email).first()
     if not existing_admin:
         hashed_password = get_password_hash(admin_password)
