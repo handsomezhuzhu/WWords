@@ -3,11 +3,17 @@ import type {
   AICompletionRequest,
   AICompletionResponse,
   WordDraft,
+  WordListResponse,
   WordRecord,
 } from "@/lib/types";
 
-export function listWords() {
-  return apiFetch<WordRecord[]>("/words/");
+export function listWords(page = 1, pageSize = 12) {
+  const params = new URLSearchParams({
+    page: String(page),
+    page_size: String(pageSize),
+  });
+
+  return apiFetch<WordListResponse>(`/words/?${params.toString()}`);
 }
 
 export function createWord(payload: WordDraft) {

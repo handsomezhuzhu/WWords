@@ -1,165 +1,170 @@
-# WWords AI 单词本
+# WWords
 
-借助 AI 补全和艾宾浩斯记忆的双语单词管理工具。
-基于 FastAPI 构建，默认使用 SQLite，也兼容 MySQL，支持 Docker 一键部署。
+WWords 是一个面向个人与小团队的 AI 单词本。
+它提供词库录入、AI 补全、双向复习、后台用户管理和 AI 服务配置，默认使用 SQLite，兼容 MySQL，并支持 Docker 部署。
 
-![Dashboard Preview](docs/cover.png)
+![WWords Dashboard](docs/cover.png)
 
-## ✨ 功能特性
+## 功能特性
 
-*   **AI 智能补全**：输入单词，自动生成音标、词性、中英文释义、例句、同义词和反义词（支持 OpenAI/Gemini 协议）。
-*   **双向复习**：支持“英译中”和“中译英”两种复习模式。
-*   **艾宾浩斯记忆**：内置科学的间隔重复算法（Spaced Repetition），自动安排复习计划。
-*   **多端适配**：响应式设计，完美支持桌面端和移动端。
-*   **灵活存储**：默认使用 SQLite，亦兼容 MySQL。
-*   **极简部署**：默认可用 SQLite 单容器部署，无需复杂的中间件依赖。
+- AI 智能补全：根据英文或中文词条自动生成释义、词性、例句等结构化内容
+- 双向复习：支持英译中和中译英两种模式
+- 艾宾浩斯记忆：根据复习结果自动推进复习间隔
+- 生产化后台：支持用户搜索、分页、创建、编辑、删除保护和 AI 配置管理
+- 词库分页：词库按页加载，适合词条数量较多的长期使用场景
+- 移动端适配：桌面和手机均可直接使用
+- 双容器部署：前端为 Next.js，后端为 FastAPI，可通过 Docker Compose 一键启动
 
----
+## 技术栈
 
-## 🚀 部署教程 (Deployment)
+- 前端：Next.js 15、React 19、TypeScript、Tailwind CSS、Radix UI
+- 后端：FastAPI、SQLAlchemy、Pydantic
+- 数据库：SQLite 默认，兼容 MySQL
+- 部署：Docker、Docker Compose、GitHub Container Registry
 
-推荐使用 Docker 进行部署，无需安装 Python 环境。
+## 界面说明
 
-### 方法一：使用 Docker Compose (推荐)
+- 工作台使用三个同级标签页：`加入词库`、`开始背单词`、`查看词库`
+- 词库和后台用户管理都支持分页，不依赖前端一次性加载全量数据
+- 后台用户编辑使用抽屉式单用户编辑流程，适合用户量增长后的持续维护
 
-1.  **下载代码或仅下载 `docker-compose.prod.yml`**
-    ```bash
-    git clone https://github.com/handsomezhuzhu/WWords.git
-    cd WWords
-    ```
+## 快速开始
 
-2.  **配置环境变量**
-    复制配置文件模板：
-    ```bash
-    cp .env.example .env
-    ```
-    编辑 `.env` 文件，设置您的管理员账号、密钥等信息：
-    ```ini
-    # 管理员初始账号（首次启动自动创建）
-    ADMIN_EMAIL=admin@example.com
-    ADMIN_PASSWORD=your_secure_password
-    
-    # 系统密钥（用于加密 Token，生产环境务必修改）
-    SECRET_KEY=generate_a_long_random_string_here
+推荐直接使用 Docker Compose。
 
-    # 数据库路径（默认 SQLite）
-    DATABASE_URL=sqlite:///./data/data.db
+### 1. 获取代码
 
-    # 若使用 MySQL，可改成：
-    # DATABASE_URL=mysql+pymysql://wwords:strong_password@mysql:3306/wwords?charset=utf8mb4
-    # DB_POOL_RECYCLE=3600
-    ```
+```bash
+git clone https://github.com/handsomezhuzhu/WWords.git
+cd WWords
+```
 
-    **部署时务必满足以下安全要求：**
+### 2. 配置环境变量
 
-    *   `SECRET_KEY` 必须是长度足够的随机字符串，**不要使用默认值**，也不要在不同环境之间重复使用同一个密钥。
-    *   `ADMIN_EMAIL` 和 `ADMIN_PASSWORD` 必须显式设置，否则不会创建默认管理员账号；管理员密码建议至少 12 位，并包含大小写字母、数字和符号。
-    *   浏览器 Token Cookie 默认启用 `secure`，生产环境应保持 `SECURE_COOKIES=true`（默认值）并根据需要设置 `COOKIE_SAMESITE`（建议 `lax`）。
-    *   应用启动后注册/修改密码会强制执行复杂度校验（长度≥12、包含大小写、数字、符号），部署时请告知用户这一要求。
+```bash
+cp .env.example .env
+```
 
-3.  **启动服务**
-    使用生产环境配置文件启动：
-    ```bash
-    # 拉取最新镜像并后台启动
-    docker-compose -f docker-compose.prod.yml up -d
-    ```
-    服务启动后，访问 `http://localhost:7997` 即可使用。
-    使用 SQLite 时，数据会持久化保存在当前目录的 `data/` 文件夹下。
+示例：
 
-### MySQL 兼容说明
+```ini
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=change_me_to_a_strong_password
+SECRET_KEY=change_me_to_a_long_random_secret
+DATABASE_URL=sqlite:///./data/data.db
+SECURE_COOKIES=true
+COOKIE_SAMESITE=lax
 
-如果您希望改用 MySQL，请确保：
+DEFAULT_AI_PROVIDER=openai
+DEFAULT_AI_API_URL=https://your-api.example.com/
+DEFAULT_AI_API_KEY=your-api-key
+DEFAULT_AI_MODEL=gpt-5.4
+DEFAULT_AI_TEMPERATURE=0
+```
 
-*   `DATABASE_URL` 使用 SQLAlchemy MySQL URL，例如 `mysql+pymysql://user:password@host:3306/dbname?charset=utf8mb4`
-*   MySQL 数据库已提前创建
-*   建议设置 `DB_POOL_RECYCLE=3600`，避免长连接被服务端回收后失效
+安全建议：
 
-当前项目仍以 SQLite 为默认开发体验，但后端已兼容 MySQL 驱动与连接配置。
+- `SECRET_KEY` 必须替换为高强度随机字符串
+- `ADMIN_PASSWORD` 建议至少 12 位，并包含大小写字母、数字和符号
+- 生产环境建议保持 `SECURE_COOKIES=true`
+- 不要提交真实 `.env`、数据库文件和 API Key
 
-### 方法二：直接使用 Docker Run
+### 3. 本地 Docker 启动
 
-如果您不想使用 docker-compose，也可以直接运行命令：
+```bash
+docker compose up --build -d
+```
 
-1.  **拉取镜像**
-    *注意：镜像名必须全为小写*
-    ```bash
-    docker pull ghcr.io/handsomezhuzhu/wwords:latest
-    ```
+启动后访问：
 
-2.  **创建数据目录**
-    ```bash
-    mkdir -p data
-    ```
+- 应用入口：`http://localhost:7997`
+- 管理员入口：使用 `.env` 中的 `ADMIN_EMAIL` 和 `ADMIN_PASSWORD`
 
-3.  **运行容器**
-    请替换 `-e` 参数中的值为您自己的配置：
-    ```bash
-    docker run -d \
-      --name wwords \
-      -p 7997:7997 \
-      -v $(pwd)/data:/app/data \
-      -e ADMIN_EMAIL="admin@example.com" \
-      -e ADMIN_PASSWORD="your_password" \
-      -e SECRET_KEY="your_secret_key" \
-      -e DATABASE_URL="sqlite:///./data/data.db" \
-      --restart unless-stopped \
-      ghcr.io/handsomezhuzhu/wwords:latest
-    ```
+## 生产部署
 
----
+仓库内提供了生产用 Compose 文件：
 
-## 🛠️ 配置 AI 服务
+```bash
+docker compose -f docker-compose.prod.yml up -d
+```
 
-首次登录后（使用环境变量中配置的管理员账号），请先进行 AI 配置，否则无法使用“AI 补全”功能。
+`docker-compose.prod.yml` 默认使用以下镜像：
 
-1.  登录后，点击侧边栏的 **“后台管理”**（仅管理员可见）。
-2.  进入 **“系统配置”**。
-3.  填写您的 AI 服务商信息：
-    *   **Provider**: 选择 OpenAI 或 Gemini（通用协议）。
-    *   **API URL**: AI 服务的接口地址（例如 `https://api.openai.com/v1` 或您的中转代理地址）。
-    *   **API Key**: 您的 API 密钥。
-    *   **Model**: 使用的模型名称（如 `gpt-4o-mini`, `gpt-3.5-turbo` 等）。
-4.  保存配置。
+- 后端：`ghcr.io/handsomezhuzhu/wwords:latest`
+- 前端：`ghcr.io/handsomezhuzhu/wwords-frontend:latest`
 
----
+生产部署前请确认：
 
-## 💻 本地开发
+- `.env` 中的管理员账号、密码和 `SECRET_KEY` 已替换
+- 已规划数据目录挂载
+- 若使用 MySQL，`DATABASE_URL` 已替换为 MySQL 连接串
 
-1.  **环境准备**
-    *   Python 3.10+
-    *   Git
+MySQL 示例：
 
-2.  **安装依赖**
-    ```bash
-    python -m venv .venv
-    # Windows
-    .venv\Scripts\activate
-    # Linux/Mac
-    source .venv/bin/activate
-    
-    pip install -r requirements.txt
-    ```
+```ini
+DATABASE_URL=mysql+pymysql://wwords:strong_password@127.0.0.1:3306/wwords?charset=utf8mb4
+DB_POOL_RECYCLE=3600
+```
 
-    如使用 MySQL，请在 `.env` 中改写 `DATABASE_URL`，格式示例：
-    ```bash
-    DATABASE_URL=mysql+pymysql://wwords:strong_password@127.0.0.1:3306/wwords?charset=utf8mb4
-    ```
+## AI 配置说明
 
-3.  **运行**
-    ```bash
-    cp .env.example .env
-    # 编辑 .env 配置...
-    
-    uvicorn app.main:app --reload
-    ```
+管理员登录后可以在后台管理页面配置 AI 服务。
 
----
+当前界面和后端逻辑支持以下提供方：
 
-## 🔗 相关链接
+- OpenAI
+- Gemini
+- DeepSeek
+- 兼容 OpenAI Chat Completions 协议的中转服务
 
-*   项目地址: [https://github.com/handsomezhuzhu/WWords](https://github.com/handsomezhuzhu/WWords)
-*   Docker 镜像: `ghcr.io/handsomezhuzhu/wwords`
+推荐填写内容：
 
-## 📄 License
+- `Provider`
+- `API URL`
+- `API Key`
+- `Model`
+- `Temperature`
 
-MIT
+如果 API Key 留空，后台更新配置时不会覆盖已有密钥。
+
+## 本地开发
+
+### 后端
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --host 0.0.0.0 --port 7997
+```
+
+### 前端
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+前端默认通过同源 `/api` 代理访问 FastAPI。
+
+## 目录结构
+
+```text
+app/         FastAPI 后端
+frontend/    Next.js 前端
+docs/        产品与架构文档、README 截图
+tests/       pytest 测试
+data/        运行期数据库文件
+```
+
+## 镜像发布
+
+仓库中的 GitHub Actions 会构建并发布以下镜像：
+
+- `ghcr.io/handsomezhuzhu/wwords`
+- `ghcr.io/handsomezhuzhu/wwords-frontend`
+
+## 开源协议
+
+本项目使用 [MIT License](LICENSE)。

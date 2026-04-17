@@ -154,6 +154,16 @@ class Word(WordBase):
         from_attributes = True
 
 
+class WordListResponse(BaseModel):
+    items: List[Word]
+    total: int
+    page: int
+    page_size: int
+    due_total: int
+    active_total: int
+    stable_total: int
+
+
 class SystemConfigBase(BaseModel):
     provider: str = "openai"
     api_key: Optional[str] = None

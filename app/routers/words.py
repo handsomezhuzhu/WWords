@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from datetime import datetime
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from .. import schemas, models, ai
@@ -50,16 +52,33 @@ def create_word(
     return new_word
 
 
-@router.get("", response_model=list[schemas.Word], include_in_schema=False)
-@router.get("/", response_model=list[schemas.Word])
+@router.get("", response_model=schemas.WordListResponse, include_in_schema=False)
+@router.get("/", response_model=schemas.WordListResponse)
 def list_words(
-    db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=12, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
 ):
-    return (
-        db.query(models.Word)
-        .filter(models.Word.owner_id == current_user.id)
+    base_query = db.query(models.Word).filter(models.Word.owner_id == current_user.id)
+    now = datetime.utcnow()
+
+    items = (
+        base_query
         .order_by(models.Word.created_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
         .all()
+    )
+
+    return schemas.WordListResponse(
+        items=items,
+        total=base_query.count(),
+        page=page,
+        page_size=page_size,
+        due_total=base_query.filter(models.Word.next_review_at <= now).count(),
+        active_total=base_query.filter(models.Word.success_streak >= 1).count(),
+        stable_total=base_query.filter(models.Word.interval_index >= 3).count(),
     )
 
 

@@ -14,6 +14,16 @@ export interface WordRecord {
   success_streak: number;
 }
 
+export interface WordListResponse {
+  items: WordRecord[];
+  total: number;
+  page: number;
+  page_size: number;
+  due_total: number;
+  active_total: number;
+  stable_total: number;
+}
+
 export interface WordDraft {
   english?: string | null;
   chinese?: string | null;
@@ -49,4 +59,3 @@ export interface AICompletionResponse {
   antonyms: string[];
   direction: string;
 }
-
