@@ -53,7 +53,7 @@ class AppSettings:
             app_version=os.getenv("APP_VERSION", "1.0"),
             environment=os.getenv("APP_ENV", "development"),
             debug=_as_bool(os.getenv("DEBUG"), default=False),
-            database_url=os.getenv("DATABASE_URL", "sqlite:///./data.db"),
+            database_url=os.getenv("DATABASE_URL", "sqlite:///./data/data.db"),
             secret_key=os.getenv("SECRET_KEY"),
             admin_email=os.getenv("ADMIN_EMAIL"),
             admin_password=os.getenv("ADMIN_PASSWORD"),

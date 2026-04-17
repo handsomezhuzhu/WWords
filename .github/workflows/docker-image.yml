@@ -1,4 +1,4 @@
-name: Build and Publish Docker images
+name: Build and Publish Docker image
 
 on:
   push:
@@ -13,17 +13,6 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - name: backend
-            image: ghcr.io/handsomezhuzhu/wwords
-            context: .
-            file: ./Dockerfile
-          - name: frontend
-            image: ghcr.io/handsomezhuzhu/wwords-frontend
-            context: ./frontend
-            file: ./frontend/Dockerfile
 
     steps:
       - name: Checkout
@@ -33,7 +22,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ matrix.image }}
+          images: ghcr.io/handsomezhuzhu/wwords
           tags: |
             type=sha
             type=ref,event=branch
@@ -52,11 +41,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push ${{ matrix.name }}
+      - name: Build and push image
         uses: docker/build-push-action@v5
         with:
-          context: ${{ matrix.context }}
-          file: ${{ matrix.file }}
+          context: .
+          file: ./Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

@@ -2,6 +2,7 @@
 
 WWords 是一个 AI 单词本，提供词库录入、AI 补全、双向复习和后台管理。  
 前端使用 Next.js，后端使用 FastAPI，默认使用 SQLite，兼容 MySQL。
+仓库现在以单容器部署为主：对外只需要启动一个 `wwords` 容器。
 
 ![WWords Dashboard](docs/cover.png)
 
@@ -19,13 +20,18 @@ WWords 是一个 AI 单词本，提供词库录入、AI 补全、双向复习和
 - 前端：Next.js 15、React 19、TypeScript、Tailwind CSS、Radix UI
 - 后端：FastAPI、SQLAlchemy、Pydantic
 - 数据库：SQLite / MySQL
-- 部署：Docker、Docker Compose、GitHub Actions、GHCR
+- 部署：Docker、Docker Compose、GitHub Actions、GHCR 单镜像发布
 
 ## 快速开始
 
 应用默认入口：
 
 - `http://localhost:7997`
+
+说明：
+
+- 单容器对外只暴露 `7997` 端口
+- 容器内部会同时启动 Next.js 和 FastAPI，无需再额外部署前端容器
 
 ### 方式一：克隆仓库后启动
 
@@ -51,10 +57,9 @@ docker compose up --build -d
 
 ### 方式二：不克隆仓库，直接使用已构建镜像
 
-GitHub Actions 会发布两个镜像：
+GitHub Actions 只发布一个单容器镜像：
 
 - `ghcr.io/handsomezhuzhu/wwords:latest`
-- `ghcr.io/handsomezhuzhu/wwords-frontend:latest`
 
 先只下载环境变量模板：
 
@@ -74,44 +79,29 @@ Copy-Item .env.example .env
 
 修改 `.env` 后，直接运行镜像。
 
-创建数据目录和网络：
+创建数据目录：
 
 ```bash
 mkdir -p data
-docker network create wwords-net
 ```
 
 拉取镜像：
 
 ```bash
 docker pull ghcr.io/handsomezhuzhu/wwords:latest
-docker pull ghcr.io/handsomezhuzhu/wwords-frontend:latest
 ```
 
-启动后端：
+启动单容器：
 
 ```bash
 docker run -d \
-  --name wwords-app \
-  --network wwords-net \
+  --name wwords \
+  -p 7997:7997 \
   --env-file .env \
   -e DATABASE_URL=sqlite:///./data/data.db \
   -v $(pwd)/data:/app/data \
   --restart unless-stopped \
   ghcr.io/handsomezhuzhu/wwords:latest
-```
-
-启动前端：
-
-```bash
-docker run -d \
-  --name wwords-frontend \
-  --network wwords-net \
-  -p 7997:3000 \
-  -e BACKEND_ORIGIN=http://wwords-app:7997 \
-  -e NEXT_PUBLIC_API_BASE_URL=/api \
-  --restart unless-stopped \
-  ghcr.io/handsomezhuzhu/wwords-frontend:latest
 ```
 
 ### 方式三：只下载 `.env` 和生产 Compose 文件
@@ -159,6 +149,7 @@ DEFAULT_AI_TEMPERATURE=0
 
 - `SECRET_KEY` 必须替换成随机高强度字符串
 - `ADMIN_PASSWORD` 建议至少 12 位，并包含大小写、数字和符号
+- 单容器部署推荐把 SQLite 文件放在挂载目录 `./data/data.db`
 - 不要提交真实 `.env`、数据库文件和 API Key
 - 如果使用 MySQL，请改写 `DATABASE_URL`
 
