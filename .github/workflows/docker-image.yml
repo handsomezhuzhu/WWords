@@ -1,8 +1,9 @@
-name: Build and Publish Docker image
+name: Build and Publish Docker images
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - "**"
   workflow_dispatch:
 
 permissions:
@@ -12,9 +13,31 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: backend
+            image: ghcr.io/handsomezhuzhu/wwords
+            context: .
+            file: ./Dockerfile
+          - name: frontend
+            image: ghcr.io/handsomezhuzhu/wwords-frontend
+            context: ./frontend
+            file: ./frontend/Dockerfile
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ matrix.image }}
+          tags: |
+            type=sha
+            type=ref,event=branch
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -29,10 +52,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push
+      - name: Build and push ${{ matrix.name }}
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ${{ matrix.context }}
+          file: ${{ matrix.file }}
           push: true
-          # Force lowercase image name to comply with Docker standards
-          tags: ghcr.io/handsomezhuzhu/wwords:latest,ghcr.io/handsomezhuzhu/wwords:${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

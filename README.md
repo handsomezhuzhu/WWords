@@ -1,7 +1,7 @@
 # WWords AI 单词本
 
 借助 AI 补全和艾宾浩斯记忆的双语单词管理工具。
-基于 FastAPI + SQLite + Vanilla JS 构建，支持 Docker 一键部署。
+基于 FastAPI 构建，默认使用 SQLite，也兼容 MySQL，支持 Docker 一键部署。
 
 ![Dashboard Preview](docs/cover.png)
 
@@ -11,7 +11,8 @@
 *   **双向复习**：支持“英译中”和“中译英”两种复习模式。
 *   **艾宾浩斯记忆**：内置科学的间隔重复算法（Spaced Repetition），自动安排复习计划。
 *   **多端适配**：响应式设计，完美支持桌面端和移动端。
-*   **极简部署**：使用 SQLite 数据库，单容器部署，无需复杂的中间件依赖。
+*   **灵活存储**：默认使用 SQLite，亦兼容 MySQL。
+*   **极简部署**：默认可用 SQLite 单容器部署，无需复杂的中间件依赖。
 
 ---
 
@@ -40,10 +41,21 @@
     
     # 系统密钥（用于加密 Token，生产环境务必修改）
     SECRET_KEY=generate_a_long_random_string_here
-    
-    # 数据库路径（通常不需要改）
+
+    # 数据库路径（默认 SQLite）
     DATABASE_URL=sqlite:///./data/data.db
+
+    # 若使用 MySQL，可改成：
+    # DATABASE_URL=mysql+pymysql://wwords:strong_password@mysql:3306/wwords?charset=utf8mb4
+    # DB_POOL_RECYCLE=3600
     ```
+
+    **部署时务必满足以下安全要求：**
+
+    *   `SECRET_KEY` 必须是长度足够的随机字符串，**不要使用默认值**，也不要在不同环境之间重复使用同一个密钥。
+    *   `ADMIN_EMAIL` 和 `ADMIN_PASSWORD` 必须显式设置，否则不会创建默认管理员账号；管理员密码建议至少 12 位，并包含大小写字母、数字和符号。
+    *   浏览器 Token Cookie 默认启用 `secure`，生产环境应保持 `SECURE_COOKIES=true`（默认值）并根据需要设置 `COOKIE_SAMESITE`（建议 `lax`）。
+    *   应用启动后注册/修改密码会强制执行复杂度校验（长度≥12、包含大小写、数字、符号），部署时请告知用户这一要求。
 
 3.  **启动服务**
     使用生产环境配置文件启动：
@@ -52,7 +64,17 @@
     docker-compose -f docker-compose.prod.yml up -d
     ```
     服务启动后，访问 `http://localhost:7997` 即可使用。
-    数据会持久化保存在当前目录的 `data/` 文件夹下。
+    使用 SQLite 时，数据会持久化保存在当前目录的 `data/` 文件夹下。
+
+### MySQL 兼容说明
+
+如果您希望改用 MySQL，请确保：
+
+*   `DATABASE_URL` 使用 SQLAlchemy MySQL URL，例如 `mysql+pymysql://user:password@host:3306/dbname?charset=utf8mb4`
+*   MySQL 数据库已提前创建
+*   建议设置 `DB_POOL_RECYCLE=3600`，避免长连接被服务端回收后失效
+
+当前项目仍以 SQLite 为默认开发体验，但后端已兼容 MySQL 驱动与连接配置。
 
 ### 方法二：直接使用 Docker Run
 
@@ -116,6 +138,11 @@
     source .venv/bin/activate
     
     pip install -r requirements.txt
+    ```
+
+    如使用 MySQL，请在 `.env` 中改写 `DATABASE_URL`，格式示例：
+    ```bash
+    DATABASE_URL=mysql+pymysql://wwords:strong_password@127.0.0.1:3306/wwords?charset=utf8mb4
     ```
 
 3.  **运行**

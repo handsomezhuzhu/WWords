@@ -1,6 +1,8 @@
 from datetime import datetime
-from typing import Optional, List
-from pydantic import BaseModel, EmailStr
+from enum import Enum, IntEnum
+from typing import List, Optional
+
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 
 
 class Token(BaseModel):
@@ -34,18 +36,111 @@ class UserUpdate(BaseModel):
     is_admin: Optional[bool] = None
 
 
+class UserPreferencesUpdate(BaseModel):
+    preferred_language: Optional[str] = None
+    preferred_theme: Optional[str] = None
+
+    @field_validator("preferred_language", "preferred_theme", mode="before")
+    @classmethod
+    def normalize_preferences(cls, value):
+        if value is None:
+            return None
+        if isinstance(value, str):
+            normalized = value.strip()
+            return normalized or None
+        return value
+
+
+class UserPasswordChange(BaseModel):
+    current_password: str
+    new_password: str
+
+
+class AdminUserCreate(UserBase):
+    password: str
+    is_admin: bool = False
+
+
+class AdminUserUpdate(BaseModel):
+    email: Optional[EmailStr] = None
+    preferred_language: Optional[str] = None
+    preferred_theme: Optional[str] = None
+    is_admin: Optional[bool] = None
+    password: Optional[str] = None
+
+    @field_validator("preferred_language", "preferred_theme", "password", mode="before")
+    @classmethod
+    def normalize_admin_strings(cls, value):
+        if value is None:
+            return None
+        if isinstance(value, str):
+            normalized = value.strip()
+            return normalized or None
+        return value
+
+
+class UserListResponse(BaseModel):
+    items: List[User]
+    total: int
+    page: int
+    page_size: int
+    query: Optional[str] = None
+
+
+class ReviewMode(str, Enum):
+    EN_TO_ZH = "en_to_zh"
+    ZH_TO_EN = "zh_to_en"
+
+
+class AICompletionDirection(str, Enum):
+    EN_TO_ZH = "en_to_zh"
+    ZH_TO_EN = "zh_to_en"
+
+
+class ReviewGrade(IntEnum):
+    DONT_KNOW = 0
+    UNCLEAR = 1
+    KNOW = 2
+
 
 class WordBase(BaseModel):
-    english: Optional[str] = None
-    chinese: Optional[str] = None
+    english: Optional[str] = Field(default=None, max_length=128)
+    chinese: Optional[str] = Field(default=None, max_length=255)
     phonetics: Optional[str] = None  # JSON string
-    definition: Optional[str] = None
-    part_of_speech: Optional[str] = None
+    definition: Optional[str] = Field(default=None, max_length=2000)
+    part_of_speech: Optional[str] = Field(default=None, max_length=128)
     parts_of_speech: Optional[str] = None  # JSON string
-    examples: Optional[str] = None  # JSON string
+    examples: Optional[str] = Field(default=None, max_length=4000)  # JSON string
+
+    @field_validator(
+        "english",
+        "chinese",
+        "phonetics",
+        "definition",
+        "part_of_speech",
+        "parts_of_speech",
+        "examples",
+        mode="before",
+    )
+    @classmethod
+    def normalize_optional_text(cls, value):
+        if value is None:
+            return None
+        if isinstance(value, str):
+            normalized = value.strip()
+            return normalized or None
+        return value
 
 
 class WordCreate(WordBase):
+    @model_validator(mode="after")
+    def validate_primary_content(self):
+        if not self.english and not self.chinese:
+            raise ValueError("Either english or chinese must be provided")
+        return self
+
+
+class WordUpdate(WordBase):
     pass
 
 
@@ -64,7 +159,17 @@ class SystemConfigBase(BaseModel):
     api_key: Optional[str] = None
     api_url: Optional[str] = None
     model: str = "gpt-4o-mini"
-    temperature: int = 0
+    temperature: int = Field(default=0, ge=0, le=2)
+
+    @field_validator("provider", "api_key", "api_url", "model", mode="before")
+    @classmethod
+    def normalize_config_text(cls, value):
+        if value is None:
+            return None
+        if isinstance(value, str):
+            normalized = value.strip()
+            return normalized or None
+        return value
 
 
 class SystemConfigCreate(SystemConfigBase):
@@ -75,12 +180,13 @@ class SystemConfig(SystemConfigBase):
     id: int
     owner_id: int
     created_at: datetime
+    api_key: Optional[str] = None
+    api_key_masked: Optional[str] = None
+    api_key_configured: bool = False
 
     class Config:
         from_attributes = True
 
-
-# --- Support Models (must be defined before use) ---
 
 class Phonetics(BaseModel):
     uk: Optional[str] = None
@@ -98,11 +204,9 @@ class Example(BaseModel):
     sentenceZh: str
 
 
-# --- Request/Response Models ---
-
 class ReviewRequest(BaseModel):
-    count: int
-    mode: str  # en_to_zh or zh_to_en
+    count: int = Field(..., ge=1, le=50)
+    mode: ReviewMode
 
 
 class ReviewItem(BaseModel):
@@ -113,12 +217,20 @@ class ReviewItem(BaseModel):
 
 
 class ReviewAnswer(BaseModel):
-    grade: int  # 0: Don't know, 1: Unclear, 2: Know
+    grade: ReviewGrade
 
 
 class AICompletionRequest(BaseModel):
-    word: str
-    direction: str = "en_to_zh"
+    word: str = Field(..., min_length=1, max_length=128)
+    direction: AICompletionDirection = AICompletionDirection.EN_TO_ZH
+
+    @field_validator("word")
+    @classmethod
+    def normalize_word(cls, value: str):
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("Word must not be empty")
+        return normalized
 
 
 class AICompletionResponse(BaseModel):

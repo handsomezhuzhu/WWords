@@ -1,0 +1,152 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 36 46% 95%;
+    --foreground: 168 21% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 168 21% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 168 21% 15%;
+    --primary: 22 63% 49%;
+    --primary-foreground: 40 47% 97%;
+    --secondary: 174 58% 31%;
+    --secondary-foreground: 40 32% 96%;
+    --accent: 42 96% 60%;
+    --accent-foreground: 168 21% 15%;
+    --muted: 35 30% 89%;
+    --muted-foreground: 168 10% 34%;
+    --border: 28 24% 80%;
+    --input: 28 24% 80%;
+    --ring: 22 63% 49%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --success: 148 47% 38%;
+    --success-foreground: 45 40% 97%;
+    --warning: 33 91% 56%;
+    --warning-foreground: 168 21% 12%;
+    --radius: 1.125rem;
+    --shadow-panel: 0 8px 24px rgba(74, 48, 28, 0.06);
+    --shadow-lift: 0 14px 36px rgba(29, 34, 25, 0.08);
+    --font-sans: "Avenir Next", "Trebuchet MS", "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    --font-display: "Avenir Next", "Trebuchet MS", "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  }
+
+  .dark {
+    --background: 167 25% 10%;
+    --foreground: 40 37% 93%;
+    --card: 168 24% 14%;
+    --card-foreground: 40 37% 93%;
+    --popover: 168 24% 14%;
+    --popover-foreground: 40 37% 93%;
+    --primary: 24 73% 54%;
+    --primary-foreground: 20 25% 10%;
+    --secondary: 174 48% 42%;
+    --secondary-foreground: 40 37% 93%;
+    --accent: 43 84% 63%;
+    --accent-foreground: 167 25% 10%;
+    --muted: 167 16% 20%;
+    --muted-foreground: 38 22% 72%;
+    --border: 167 13% 28%;
+    --input: 167 13% 28%;
+    --ring: 24 73% 54%;
+    --destructive: 0 74% 55%;
+    --destructive-foreground: 40 37% 93%;
+    --success: 148 42% 46%;
+    --success-foreground: 40 37% 93%;
+    --warning: 33 91% 56%;
+    --warning-foreground: 167 25% 10%;
+    --shadow-panel: 0 12px 28px rgba(0, 0, 0, 0.18);
+    --shadow-lift: 0 18px 42px rgba(0, 0, 0, 0.24);
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    min-height: 100vh;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+
+  a {
+    @apply transition-colors;
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.24);
+    color: hsl(var(--foreground));
+  }
+}
+
+@layer components {
+  .page-frame {
+    @apply rounded-[1.75rem] border border-white/55 bg-white/70 backdrop-blur-xl;
+    box-shadow: var(--shadow-lift);
+  }
+
+  .paper-panel {
+    @apply rounded-[1.5rem] border border-white/60 bg-white/82 backdrop-blur-xl;
+    box-shadow: var(--shadow-panel);
+  }
+
+  .grid-noise {
+    background-image:
+      linear-gradient(rgba(64, 58, 49, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(64, 58, 49, 0.06) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  .study-chip {
+    @apply inline-flex items-center rounded-full border border-border/80 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground shadow-sm;
+  }
+
+  .glass-divider {
+    @apply h-px w-full bg-gradient-to-r from-transparent via-border to-transparent;
+  }
+
+  .desk-orb {
+    @apply absolute rounded-full blur-3xl;
+    background: radial-gradient(circle, hsl(var(--accent) / 0.28), transparent 70%);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

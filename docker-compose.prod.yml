@@ -1,13 +1,9 @@
-version: '3.8'
-
 services:
   app:
     # Use the pre-built image from GitHub Container Registry
     # Image name must be lowercase
     image: ghcr.io/handsomezhuzhu/wwords:latest
     container_name: wwords
-    ports:
-      - "7997:7997"
     volumes:
       - ./data:/app/data
     environment:
@@ -18,4 +14,16 @@ services:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
       # Security key for JWT
       - SECRET_KEY=${SECRET_KEY:-change-this-secret-key}
+    restart: unless-stopped
+
+  frontend:
+    image: ghcr.io/handsomezhuzhu/wwords-frontend:latest
+    container_name: wwords-frontend
+    ports:
+      - "7997:3000"
+    environment:
+      - BACKEND_ORIGIN=http://app:7997
+      - NEXT_PUBLIC_API_BASE_URL=/api
+    depends_on:
+      - app
     restart: unless-stopped
