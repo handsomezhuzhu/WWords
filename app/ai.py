@@ -1,16 +1,46 @@
 import json
+from urllib.parse import urlparse
+
 import httpx
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from . import schemas, models
 
-def complete_word(request: schemas.AICompletionRequest, db: Session) -> schemas.AICompletionResponse:
-    config = db.query(models.SystemConfig).first()
-    
+from . import models, schemas
+
+
+def get_active_config(db: Session, current_user: models.User) -> models.SystemConfig | None:
+    if current_user.is_admin:
+        admin_config = (
+            db.query(models.SystemConfig)
+            .filter(models.SystemConfig.owner_id == current_user.id)
+            .order_by(models.SystemConfig.created_at.desc())
+            .first()
+        )
+        if admin_config:
+            return admin_config
+
+    return (
+        db.query(models.SystemConfig)
+        .join(models.User, models.SystemConfig.owner_id == models.User.id)
+        .filter(models.User.is_admin.is_(True))
+        .order_by(models.SystemConfig.created_at.desc())
+        .first()
+    )
+
+
+def complete_word(
+    request: schemas.AICompletionRequest,
+    db: Session,
+    current_user: models.User,
+) -> schemas.AICompletionResponse:
+    config = get_active_config(db, current_user)
     if not config or not config.api_url or not config.api_key:
-        # Fallback to mock if not configured
-        return _mock_complete(request)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI service is not configured",
+        )
 
-    if request.direction == "zh_to_en":
+    if request.direction == schemas.AICompletionDirection.ZH_TO_EN:
         target_instruction = f"""
         Target Chinese Word: "{request.word}"
         Task: Translate this Chinese word to English and provide details for the English translation.
@@ -24,7 +54,7 @@ def complete_word(request: schemas.AICompletionRequest, db: Session) -> schemas.
     prompt = f"""
     You are a helpful assistant that provides dictionary data for language learning.
     {target_instruction}
-    
+
     Please provide the following information in strict JSON format:
     1. Phonetics (UK and US) for the English word
     2. Parts of Speech (list with pos, English meaning, Chinese meaning). For "meaningZh", provide VERY CONCISE Chinese definitions (1-4 words max). Avoid long descriptive sentences.
@@ -41,89 +71,84 @@ def complete_word(request: schemas.AICompletionRequest, db: Session) -> schemas.
         "synonyms": ["..."],
         "antonyms": ["..."]
     }}
-    
+
     Ensure the JSON is valid and contains no other text.
     """
 
     try:
         headers = {
             "Authorization": f"Bearer {config.api_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
-        
-        # Determine endpoint - usually /v1/chat/completions
-        url = config.api_url.rstrip('/')
-        if not url.endswith('/chat/completions'):
-            url += '/chat/completions'
+
+        url = config.api_url.rstrip("/")
+        parsed_url = urlparse(url)
+        if url.endswith("/chat/completions") or url.endswith("/v1/chat/completions"):
+            pass
+        elif parsed_url.path in ("", "/"):
+            url += "/v1/chat/completions"
+        elif url.endswith("/v1"):
+            url += "/chat/completions"
+        else:
+            url += "/chat/completions"
 
         payload = {
             "model": config.model,
             "messages": [
                 {"role": "system", "content": "You are a dictionary API. Output JSON only."},
-                {"role": "user", "content": prompt}
+                {"role": "user", "content": prompt},
             ],
-            "temperature": 0.3
+            "temperature": float(config.temperature),
         }
 
         with httpx.Client(timeout=30.0) as client:
             response = client.post(url, headers=headers, json=payload)
             response.raise_for_status()
             data = response.json()
-            
-            content = data['choices'][0]['message']['content']
-            # Clean up potential markdown code blocks
-            if content.startswith("```json"):
-                content = content[7:]
-            if content.endswith("```"):
-                content = content[:-3]
-            content = content.strip()
-            
-            result = json.loads(content)
-            
-            # Map to schema
-            return schemas.AICompletionResponse(
-                word=result.get("word", request.word),
-                phonetics=schemas.Phonetics(**result.get("phonetics", {})),
-                partsOfSpeech=[schemas.PartOfSpeech(**p) for p in result.get("partsOfSpeech", [])],
-                examples=[schemas.Example(**e) for e in result.get("examples", [])],
-                synonyms=result.get("synonyms", []),
-                antonyms=result.get("antonyms", []),
-                direction=request.direction
+
+        choices = data.get("choices") or []
+        if not choices or "message" not in choices[0]:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="AI provider returned an unexpected response",
             )
 
-    except Exception as e:
-        print(f"AI Error: {e}")
-        return _mock_complete(request)
+        content = choices[0]["message"].get("content", "")
+        if content.startswith("```json"):
+            content = content[7:]
+        if content.endswith("```"):
+            content = content[:-3]
+        content = content.strip()
 
-
-def _mock_complete(request: schemas.AICompletionRequest) -> schemas.AICompletionResponse:
-    word = request.word
-    direction = request.direction
-
-    # Mock data generation
-    if direction == "en_to_zh":
-        phonetics = schemas.Phonetics(uk="/mock/", us="/mock/")
-        parts = [
-            schemas.PartOfSpeech(pos="noun", meaningEn="A mock definition", meaningZh="模拟定义"),
-        ]
-        examples = [
-            schemas.Example(sentenceEn=f"This is a mock example for {word}.", sentenceZh=f"这是 {word} 的模拟例句。"),
-        ]
-        synonyms = ["mock"]
-        antonyms = []
-    else:
-        phonetics = schemas.Phonetics(uk="", us="")
-        parts = []
-        examples = []
-        synonyms = []
-        antonyms = []
-
-    return schemas.AICompletionResponse(
-        word=word,
-        phonetics=phonetics,
-        partsOfSpeech=parts,
-        examples=examples,
-        synonyms=synonyms,
-        antonyms=antonyms,
-        direction=direction,
-    )
+        result = json.loads(content)
+        return schemas.AICompletionResponse(
+            word=result.get("word", request.word),
+            phonetics=schemas.Phonetics(**result.get("phonetics", {})),
+            partsOfSpeech=[schemas.PartOfSpeech(**item) for item in result.get("partsOfSpeech", [])],
+            examples=[schemas.Example(**item) for item in result.get("examples", [])],
+            synonyms=result.get("synonyms", []),
+            antonyms=result.get("antonyms", []),
+            direction=request.direction,
+        )
+    except httpx.TimeoutException as exc:
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail="AI provider request timed out",
+        ) from exc
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"AI provider returned HTTP {exc.response.status_code}",
+        ) from exc
+    except json.JSONDecodeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="AI provider returned invalid JSON",
+        ) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="AI provider request failed",
+        ) from exc

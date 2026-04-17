@@ -1,10 +1,8 @@
-version: '3.8'
-
 services:
   app:
     build: .
-    ports:
-      - "7997:7997"
+    expose:
+      - "7997"
     volumes:
       - ./data:/app/data
     environment:
@@ -12,4 +10,23 @@ services:
       - ADMIN_EMAIL=${ADMIN_EMAIL}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - SECRET_KEY=${SECRET_KEY}
+      - SECURE_COOKIES=${SECURE_COOKIES}
+      - COOKIE_SAMESITE=${COOKIE_SAMESITE}
+      - DEFAULT_AI_PROVIDER=${DEFAULT_AI_PROVIDER}
+      - DEFAULT_AI_API_URL=${DEFAULT_AI_API_URL}
+      - DEFAULT_AI_API_KEY=${DEFAULT_AI_API_KEY}
+      - DEFAULT_AI_MODEL=${DEFAULT_AI_MODEL}
+      - DEFAULT_AI_TEMPERATURE=${DEFAULT_AI_TEMPERATURE}
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "7997:3000"
+    environment:
+      - BACKEND_ORIGIN=http://app:7997
+      - NEXT_PUBLIC_API_BASE_URL=/api
+    depends_on:
+      - app
     restart: unless-stopped

@@ -186,13 +186,21 @@ if (completeButton) {
     const originalText = completeButton.innerHTML;
     completeButton.disabled = true;
     completeButton.innerHTML = `<span class="spinner"></span> AI Completing...`;
+    const token = localStorage.getItem("token");
     
     try {
         const res = await fetch("/words/complete", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify(payload),
         });
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            throw new Error(errorData.detail || "AI Completion failed");
+        }
         const data = await res.json();
         document.getElementById("completion-output").textContent = JSON.stringify(
           data,
@@ -211,7 +219,7 @@ if (completeButton) {
         }
     } catch (e) {
         console.error(e);
-        alert("AI Completion failed");
+        alert(e.message || "AI Completion failed");
     } finally {
         // Restore button state
         completeButton.disabled = false;
